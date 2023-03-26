@@ -36,16 +36,30 @@ internal static class RosalinaGenerator
             new RosalinaEditorWindowBindingsGeneartor() : 
             new RosalinaBindingsGenerator();
 
-        Debug.Log($"[Rosalina]: Generating UI bindings for {document.FullPath}");
+        // Try to get an instance of settings if the user has set these in Project Settings
+        RosalinaSettings settings = RosalinaSettings.GetInstance() ?? new RosalinaSettings()
+        {
+            // Some defaults if the settings have never been created.
+            IsEnabled = true,
+            DefaultNamespace = string.Empty
+        };
 
+        // Only run if we're enabled.
+        if (!settings.IsEnabled)
+        {
+            Debug.Log($"[Rosalina]: Unable to generate UI Bindings because Rosalina was disabled in settings.");
+            Debug.Log($"[Rosalina]: You can re-enable Rosalina in Edit -> Project Settings -> Rosalina.");
+            return;
+        }
+
+        Debug.Log($"[Rosalina]: Generating UI bindings for {document.FullPath}");
         RosalinaGenerationResult result = generator.Generate(document);
         result.Save(outputFile);
-
         Debug.Log($"[Rosalina]: Done generating: {document.Name} (output: {outputFile})");
     }
 
     /// <summary>
-    /// Geneartes a C# script for the UI logic.
+    /// Generates a C# script for the UI logic.
     /// </summary>
     /// <param name="document">UI Document asset information.</param>
     /// <param name="outputFile">Output file.</param>
@@ -56,12 +70,30 @@ internal static class RosalinaGenerator
             new RosalinaEditorWindowScriptGenerator() :
             new RosalinaScriptGenerator();
 
+        // Try to get an instance of settings if the user has set these in Project Settings
+        RosalinaSettings settings = RosalinaSettings.GetInstance() ?? new RosalinaSettings()
+        {
+            // Some defaults if the settings have never been created.
+            IsEnabled = true,
+            DefaultNamespace = string.Empty
+        };
+
+        // Only run if we're enabled.
+        if (!settings.IsEnabled)
+        {
+            Debug.Log($"[Rosalina]: Unable to generate UI script because Rosalina was disabled in settings.");
+            Debug.Log($"[Rosalina]: You can re-enable Rosalina in Edit -> Project Settings -> Rosalina.");
+            return;
+        }
+
+
         Debug.Log($"[Rosalina]: Generating UI script for {outputFile}");
 
         RosalinaGenerationResult result = generator.Generate(document);
         result.Save(outputFile);
 
         Debug.Log($"[Rosalina]: Done generating: {document.Name} (output: {outputFile})");
+    
     }
 }
 #endif

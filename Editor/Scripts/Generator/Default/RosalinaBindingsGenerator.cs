@@ -22,6 +22,14 @@ internal class RosalinaBindingsGenerator : IRosalinaGeneartor
             throw new ArgumentNullException(nameof(documentAsset), "Cannot generate binding with a null document asset.");
         }
 
+        // Try to get an instance of settings if the user has set these in Project Settings
+        RosalinaSettings settings = RosalinaSettings.GetInstance() ?? new RosalinaSettings()
+        {
+            // Some defaults if the settings have never been created.
+            IsEnabled = true,
+            DefaultNamespace = string.Empty
+        };
+
         MemberDeclarationSyntax documentVariable = CreateDocumentVariable();
         MemberDeclarationSyntax visualElementProperty = CreateVisualElementRootProperty();
         InitializationStatement[] statements = RosalinaStatementSyntaxFactory.GenerateInitializeStatements(documentAsset.UxmlDocument, CreateRootQueryMethodAccessor());
@@ -45,8 +53,20 @@ internal class RosalinaBindingsGenerator : IRosalinaGeneartor
             .AddUsings(
                 SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("UnityEngine")),
                 SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("UnityEngine.UIElements"))
-             )
-            .AddMembers(@class);
+            );
+
+        if (!string.IsNullOrEmpty(settings.DefaultNamespace))
+        {
+            compilationUnit = compilationUnit.AddMembers(
+                SyntaxFactory
+                    .NamespaceDeclaration(SyntaxFactory.ParseName(settings.DefaultNamespace))
+                    .AddMembers(@class)
+            );
+        }
+        else
+        {
+            compilationUnit = compilationUnit.AddMembers(@class);
+        }
 
         string code = compilationUnit
             .NormalizeWhitespace()
