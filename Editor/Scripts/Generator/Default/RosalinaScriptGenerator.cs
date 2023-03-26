@@ -23,6 +23,14 @@ internal class RosalinaScriptGenerator : IRosalinaGeneartor
             )
         );
 
+        // Try to get an instance of settings if the user has set these in Project Settings
+        RosalinaSettings settings = RosalinaSettings.GetInstance() ?? new RosalinaSettings()
+        {
+            // Some defaults if the settings have never been created.
+            IsEnabled = true,
+            DefaultNamespace = string.Empty
+        };
+
         MethodDeclarationSyntax onEnableMethod = RosalinaSyntaxFactory.CreateMethod("void", UnityConstants.OnEnableHookName, SyntaxKind.PrivateKeyword)
             .WithBody(SyntaxFactory.Block(initializeDocumentMethod));
 
@@ -37,8 +45,21 @@ internal class RosalinaScriptGenerator : IRosalinaGeneartor
         CompilationUnitSyntax compilationUnit = SyntaxFactory.CompilationUnit()
             .AddUsings(
                 SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("UnityEngine"))
-            )
-            .AddMembers(@class);
+            );
+
+        if (!string.IsNullOrEmpty(settings.DefaultNamespace))
+        {
+            compilationUnit = compilationUnit.AddMembers(
+                SyntaxFactory
+                    .NamespaceDeclaration(SyntaxFactory.ParseName(settings.DefaultNamespace))
+                    .AddMembers(@class)
+            );
+        }
+        else
+        {
+            compilationUnit = compilationUnit.AddMembers(@class);
+        }
+
 
         string code = compilationUnit
             .NormalizeWhitespace()
